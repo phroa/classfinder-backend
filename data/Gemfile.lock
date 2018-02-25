@@ -1,0 +1,14 @@
+GEM
+  remote: https://api.rubygems.org/
+  specs:
+    cache_lib (0.1.0)
+    mini_portile2 (2.3.0)
+    nokogiri (1.8.2)
+      mini_portile2 (~> 2.3.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  cache_lib
+  nokogiri
