@@ -61,3 +61,4 @@ build-iPhoneSimulator/
 # End of https://www.gitignore.io/api/ruby,vagrant
 
 *.log
+data/cache/
