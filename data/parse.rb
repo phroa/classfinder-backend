@@ -2,6 +2,7 @@ require 'cgi'
 require 'date'
 require 'fileutils'
 require 'nokogiri'
+require 'time'
 
 TERM_MAP = {
   '10' => 'Winter',
@@ -15,6 +16,7 @@ Term = Struct.new :code, :year, :quarter, :current
 Attribute = Struct.new :code, :desc, :gur
 Subject = Struct.new :code, :desc
 Instructor = Struct.new :code, :last, :first
+Location = Struct.new :building, :room
 Course = Struct.new :code,
                     :subject,
                     :number,
@@ -28,7 +30,23 @@ Course = Struct.new :code,
                     :enrolled,
                     :available,
                     :instructor,
-                    :credits
+                    :credits do
+  def add_time! timestring
+    self[:times] ||= {}
+
+    days, times, half = timestring.split
+    s, e = times.split('-').map(&Time.method(:parse).to_proc)
+
+    if half == 'pm'
+      e += 3600 * 12
+      s += 3600 * 12 if s.hour < 8
+    end
+
+    days.each_char do |day|
+      self[:times][day] = s..e
+    end
+  end
+end
 
 contents = File.read 'index.html'
 
@@ -107,7 +125,7 @@ all_terms.each do |term|
         course.enrolled = cells.shift.text.to_i
         course.available = cells.shift.text.to_i
 
-        ilast, ifirst = cells.shift.text.split(',').map(&:strip)
+        ilast, ifirst = cells.shift.text.split(', ')
         course.instructor = (all_instructors.find do |instructor|
                                instructor.first == ifirst && instructor.last == ilast
                              end)
@@ -124,10 +142,21 @@ all_terms.each do |term|
                                  attribute.code == code
                                end
                              end)
+
+        course.add_time! cells.shift.text.strip
+
+        building, room = cells.shift.text.gsub(/&nbsp/, '').split
+        course.location = Location.new(building, room.to_i)
+
+        credit_range = cells.shift.text.split('-').map(&:to_i)
+        if credit_range.size == 1
+          course.credits = credit_range[0]
+        else
+          course.credits = credit_range[0]..credit_range[1]
+        end
+
         all_courses[term][subject] << course
       end
     end
   end
 end
-
-#
