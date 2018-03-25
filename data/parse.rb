@@ -30,7 +30,9 @@ Course = Struct.new :code,
                     :enrolled,
                     :available,
                     :instructor,
-                    :credits do
+                    :credits,
+                    :fees,
+                    :status do
   def add_time! timestring
     self[:times] ||= {}
 
@@ -111,10 +113,12 @@ all_terms.each do |term|
       cells = subject_html
                 .css('table')[1]
                 .css('td')
-                .drop(11)
+                .drop(10)
 
       while cells.any?
         course = Course.new
+
+        course.status = cells.shift.text.strip || nil
 
         course.subject = subject
         course.code = cells.shift.text
@@ -155,7 +159,18 @@ all_terms.each do |term|
           course.credits = credit_range[0]..credit_range[1]
         end
 
-        all_courses[term][subject] << course
+        course.fees ||= []
+        course.fees << cells.shift.text.strip # last cell
+
+        # empty row; divider between courses
+        if cells.take(8).all? { |cell| cell.children.empty? }
+          cells = cells.drop(8)
+
+          all_courses[term][subject] << course
+
+          # for next loop run
+          course = Course.new
+        end
       end
     end
   end
