@@ -122,7 +122,11 @@ all_terms.each do |term|
 
         course.subject = subject
         course.code = cells.shift.text
-        course.number = course.code.split[1].to_i
+
+        # Some courses are like 197L or 491X, only .to_i if it's possible to do so
+        course.number = course.code.split[1]
+        course.number = course.number.to_i if course.number.to_i.to_s == course.number
+
         course.title = cells.shift.text
         course.crn = cells.shift.xpath('input').attr('value').value.to_i
         course.capacity = cells.shift.text.to_i
